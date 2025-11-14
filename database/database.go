@@ -28,18 +28,18 @@ CREATE TABLE IF NOT EXISTS games (
 );
 `
 
+	if err != nil {
+		log.Fatal(err) // Affiche l'erreur si la connexion échoue
+	}
+
 	_, err = db.Exec(createUsersTable)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err) // Affiche l'erreur si la création de la table échoue
 	}
 
 	_, err = db.Exec(createGamesTable)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err) // Affiche l'erreur si la création de la table échoue
 	}
 
 	return db
