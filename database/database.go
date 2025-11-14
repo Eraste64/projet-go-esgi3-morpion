@@ -1,14 +1,14 @@
 package database
 
 import (
-	"database/sql"
-	"log"
+	"database/sql" // package standard pour manipuler une base SQL
+	"log"          // package pour afficher les erreurs
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite" // driver SQLite, l'underscore active le driver mais on n'utilise pas directement le package
 )
 
 func Connect() *sql.DB {
-	db, err := sql.Open("sqlite3", "./morpion.db")
+	db, err := sql.Open("sqlite", "./morpion.db")
 	createUsersTable := `
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

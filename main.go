@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Projet-Go-ESGI3-Morpion/database"
+	"projet-go-esgi3-morpion/database"
 )
 
 func main() {
