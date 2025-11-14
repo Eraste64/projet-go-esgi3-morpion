@@ -22,12 +22,13 @@ CREATE TABLE IF NOT EXISTS users (
 	createGamesTable := `
 CREATE TABLE IF NOT EXISTS games (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    grid TEXT,
-    player TEXT,
-    status TEXT
+    player1 TEXT NOT NULL,
+    player2 TEXT NOT NULL,
+    board TEXT NOT NULL,
+    nextTurn TEXT NOT NULL,
+    winner TEXT
 );
 `
-
 	if err != nil {
 		log.Fatal(err) // Affiche l'erreur si la connexion échoue
 	}

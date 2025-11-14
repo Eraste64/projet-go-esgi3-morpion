@@ -11,6 +11,8 @@ import (
 
 func main() {
 	db := database.Connect()
+	// db.Exec("DROP TABLE IF EXISTS games") pour supprimer la table à chaque démarrage (utile en dev)
+
 	defer db.Close()
 
 	r := gin.Default() // Crée un serveur avec logs et récupération d'erreurs
@@ -221,7 +223,7 @@ func main() {
 
 		_, err := db.Exec(query, args...)
 		if err != nil {
-    c.JSON(500, gin.H{"error": err.Error()})
+			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 
