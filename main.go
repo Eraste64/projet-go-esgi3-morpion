@@ -221,7 +221,7 @@ func main() {
 
 		_, err := db.Exec(query, args...)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+    c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 
