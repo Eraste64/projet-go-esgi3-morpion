@@ -13,10 +13,12 @@ func main() {
 
 	r := gin.Default() // Crée un serveur avec logs et récupération d'erreurs
 
+	// Endpoint de test
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "pong"})
 	})
 
+	// Créer un nouvel utilisateur
 	r.POST("/users", func(c *gin.Context) {
 		var newUser models.User
 
@@ -35,6 +37,39 @@ func main() {
 
 		// Renvoie le nouvel utilisateur en JSON
 		c.JSON(201, newUser)
+	})
+
+	// Afficher tous les utilisateurs
+	r.GET("/users", func(c *gin.Context) {
+		rows, err := db.Query("SELECT ID, Name FROM users")
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		defer rows.Close()
+
+		var users []models.User
+		for rows.Next() {
+			var user models.User
+			rows.Scan(&user.ID, &user.Name)
+			users = append(users, user)
+		}
+
+		c.JSON(200, users)
+	})
+
+	// Afficher un utilisateur précis
+	r.GET("/users/:id", func(c *gin.Context) {
+		id := c.Param("id") // Récupère l'ID depuis l'URL
+
+		var user models.User
+		err := db.QueryRow("SELECT ID, Name FROM users WHERE ID = ?", id).Scan(&user.ID, &user.Name)
+		if err != nil {
+			c.JSON(404, gin.H{"error": "User not found"})
+			return
+		}
+
+		c.JSON(200, user)
 	})
 
 	r.Run(":8080") // Démarre le serveur sur le port 8080
