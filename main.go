@@ -4,6 +4,7 @@ import (
 	"projet-go-esgi3-morpion/database"
 	"projet-go-esgi3-morpion/models"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -134,6 +135,107 @@ func main() {
 		}
 
 		c.JSON(200, gin.H{"message": "Utilisateur supprimé", "id": numID})
+	})
+
+	// Afficher un utilisateur précis avec conversion d'ID
+	r.GET("/users/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		numID, err := strconv.Atoi(id)
+		if err != nil {
+			c.JSON(400, gin.H{"error": "ID invalide"})
+			return
+		}
+
+		var user models.User
+		err = db.QueryRow("SELECT ID, Name FROM users WHERE ID = ?", numID).Scan(&user.ID, &user.Name)
+		if err != nil {
+			c.JSON(404, gin.H{"error": "Utilisateur non trouvé"})
+			return
+		}
+
+		c.JSON(200, user)
+	})
+
+	// Rechercher des utilisateurs par pseudo
+	r.GET("/users/search", func(c *gin.Context) {
+		query := c.Query("query")
+		rows, err := db.Query("SELECT ID, Name FROM users WHERE Name LIKE ?", "%"+query+"%")
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		defer rows.Close()
+
+		users := []models.User{}
+		for rows.Next() {
+			var u models.User
+			rows.Scan(&u.ID, &u.Name)
+			users = append(users, u)
+		}
+
+		c.JSON(200, users)
+	})
+
+	// Supprimer plusieurs utilisateurs par liste d'IDs
+	r.DELETE("/users", func(c *gin.Context) {
+		var payload struct {
+			IDs []int `json:"ids"`
+		}
+		if err := c.BindJSON(&payload); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		query := "DELETE FROM users WHERE ID IN (?" + strings.Repeat(",?", len(payload.IDs)-1) + ")"
+		args := make([]interface{}, len(payload.IDs))
+		for i, id := range payload.IDs {
+			args[i] = id
+		}
+
+		_, err := db.Exec(query, args...)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(200, gin.H{"message": "Utilisateurs supprimés", "ids": payload.IDs})
+	})
+
+	// Mettre à jour le pseudo de plusieurs utilisateurs par liste d'IDs
+	r.PUT("/users", func(c *gin.Context) {
+		var payload struct {
+			IDs  []int  `json:"ids"`
+			Name string `json:"name"`
+		}
+		if err := c.BindJSON(&payload); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		query := "UPDATE users SET Name = ? WHERE ID IN (?" + strings.Repeat(",?", len(payload.IDs)-1) + ")"
+		args := make([]interface{}, len(payload.IDs)+1)
+		args[0] = payload.Name
+		for i, id := range payload.IDs {
+			args[i+1] = id
+		}
+
+		_, err := db.Exec(query, args...)
+		if err != nil {
+    c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(200, gin.H{"message": "Utilisateurs mis à jour", "ids": payload.IDs, "name": payload.Name})
+	})
+
+	// Réinitialiser la base de données (supprimer tous les utilisateurs sauf l’admin)
+	r.POST("/reset", func(c *gin.Context) {
+		_, err := db.Exec("DELETE FROM users WHERE IsAdmin = 0") // conserve l’admin
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"message": "BDD réinitialisée"})
 	})
 
 	r.Run(":8080") // Démarre le serveur sur le port 8080
